@@ -3,7 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="snippet-host" id="snippet-host-meta" content="">
+  <script src="/snippet-viewer.js"></script>
+  <script>
+    // Set default host before body is parsed (so snippet-viewers see it when they connect)
+    SnippetViewer.setDefaultHost(new URL('./', window.location.href).href);
+  </script>
   <title>Snippet Viewer Demo</title>
   <style>
     body {
@@ -34,7 +38,7 @@
   <!-- Section 1: Using default host (simplest) -->
   <div class="section">
     <h2>Using Default Host (simplest)</h2>
-    <p>With a default host set via meta tag, viewers need no attributes:</p>
+    <p>With a default host set via <code>SnippetViewer.setDefaultHost()</code>, viewers need no attributes:</p>
 
     <p>Here's a simple hello world function:</p>
     <snippet-viewer snippet="hello-world@example.ts"></snippet-viewer>
@@ -67,16 +71,9 @@
     <snippet-viewer snippet="some-snippet" snippet-host="https://nonexistent.example.com"></snippet-viewer>
   </div>
 
-  <!-- Load the component -->
   <script>
-    // Set default host via meta tag before loading the component
-    const baseUrl = new URL('./', window.location.href).href;
-    document.getElementById('snippet-host-meta').content = baseUrl;
-  </script>
-  <script src="/snippet-viewer.js"></script>
-  <script>
-    // Also set the provider's host for the provider example
-    document.getElementById('local-provider').setAttribute('snippet-host', baseUrl);
+    // Set the provider's host for the provider example
+    document.getElementById('local-provider').setAttribute('snippet-host', new URL('./', window.location.href).href);
   </script>
 </body>
 </html>
