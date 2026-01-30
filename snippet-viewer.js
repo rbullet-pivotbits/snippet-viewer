@@ -54,6 +54,13 @@
     'yaml': 'yaml',
     'md': 'markdown',
     'sql': 'sql',
+    'c': 'c',
+    'h': 'c',
+    'cpp': 'cpp',
+    'cc': 'cpp',
+    'cxx': 'cpp',
+    'hpp': 'cpp',
+    'ino': 'arduino',
   };
 
   // Load Prism.js dynamically
@@ -79,7 +86,7 @@
       script.src = `${PRISM_CDN}/prism.min.js`;
       script.onload = () => {
         // Load additional language components
-        const languages = ['typescript', 'jsx', 'tsx', 'bash', 'json', 'yaml', 'python', 'java'];
+        const languages = ['typescript', 'jsx', 'tsx', 'bash', 'json', 'yaml', 'python', 'java', 'c', 'cpp', 'arduino'];
         let loadedCount = 0;
 
         languages.forEach(lang => {
