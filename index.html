@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Snippet Viewer - Web Component</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 2rem;
+      line-height: 1.6;
+      color: #333;
+    }
+    h1 {
+      border-bottom: 2px solid #eee;
+      padding-bottom: 0.5rem;
+    }
+    code {
+      background: #f4f4f4;
+      padding: 0.2em 0.4em;
+      border-radius: 3px;
+      font-size: 0.9em;
+    }
+    pre {
+      background: #1d1f21;
+      color: #c5c8c6;
+      padding: 1rem;
+      border-radius: 6px;
+      overflow-x: auto;
+    }
+    pre code {
+      background: transparent;
+      padding: 0;
+    }
+    .demo-link {
+      display: inline-block;
+      margin-top: 1rem;
+      padding: 0.75rem 1.5rem;
+      background: #0066cc;
+      color: white;
+      text-decoration: none;
+      border-radius: 6px;
+    }
+    .demo-link:hover {
+      background: #0052a3;
+    }
+    .section {
+      margin: 2rem 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>Snippet Viewer</h1>
+  <p>A vanilla web component for displaying syntax-highlighted code snippets from a JSON file.</p>
+
+  <a href="/example/" class="demo-link">View Demo</a>
+
+  <div class="section">
+    <h2>Installation</h2>
+    <p>Add the script to your page:</p>
+    <pre><code>&lt;script src="https://your-site.netlify.app/snippet-viewer.js"&gt;&lt;/script&gt;</code></pre>
+  </div>
+
+  <div class="section">
+    <h2>Usage</h2>
+    <p>Create a <code>snippets.json</code> file:</p>
+    <pre><code>{
+  "my-function@example.ts": "function hello() {\n  console.log('Hello!');\n}"
+}</code></pre>
+
+    <p>Use the component:</p>
+    <pre><code>&lt;snippet-viewer
+  snippet="my-function@example.ts"
+  snippet-host="https://your-site.com/snippets"&gt;
+&lt;/snippet-viewer&gt;</code></pre>
+  </div>
+
+  <div class="section">
+    <h2>With Provider (Multiple Snippets)</h2>
+    <p>Use a provider to share the host across multiple viewers:</p>
+    <pre><code>&lt;snippet-provider snippet-host="https://your-site.com/snippets"&gt;
+  &lt;snippet-viewer snippet="function-a@file.ts"&gt;&lt;/snippet-viewer&gt;
+  &lt;snippet-viewer snippet="function-b@file.ts"&gt;&lt;/snippet-viewer&gt;
+&lt;/snippet-provider&gt;</code></pre>
+  </div>
+
+  <div class="section">
+    <h2>Features</h2>
+    <ul>
+      <li>Syntax highlighting via Prism.js (loaded automatically)</li>
+      <li>Auto-detects language from file extension</li>
+      <li>Shared cache across all instances</li>
+      <li>Shadow DOM isolation (safe for WordPress)</li>
+      <li>Provider component for multiple snippets</li>
+      <li>Supports TypeScript, JavaScript, Java, Python, and more</li>
+    </ul>
+  </div>
+
+  <div class="section">
+    <h2>Snippet Key Format</h2>
+    <p>Keys use the format: <code>name@filename.ext</code></p>
+    <ul>
+      <li><code>name</code> - Identifier for the snippet</li>
+      <li><code>filename.ext</code> - Displayed in header, extension determines syntax highlighting</li>
+    </ul>
+  </div>
+</body>
+</html>

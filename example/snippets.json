@@ -1,0 +1,7 @@
+{
+  "hello-world@example.ts": "function helloWorld() {\n  console.log('Hello, World!');\n}",
+  "hello-world@Example.java": "public class Example {\n    public static void main(String[] args) {\n        System.out.println(\"Hello, World!\");\n    }\n\n    @Override\n    public String toString() {\n        return \"Example class\";\n    }\n}",
+  "counter@example.ts": "@kosModel({ modelTypeId: MODEL_TYPE, singleton: true })\nexport class CounterModel implements IKosDataModel {\n  id: string;\n  count = 0;\n\n  constructor(modelId: string) {\n    this.id = modelId;\n  }\n\n  increment() {\n    this.count += 1;\n  }\n}",
+  "config-property@example.ts": "@kosConfigProperty({\n  path: \"studio:service:codex\",\n  attribute: \"device_name\",\n  serviceBasePath: \"/api/config\",\n})\ndeviceName!: KosConfigProperty<string>;",
+  "react-component@example.tsx": "export const Counter: React.FC = kosComponent(() => {\n  const { model } = useCounter();\n  \n  return (\n    <div>\n      <p>Count: {model?.count}</p>\n      <button onClick={() => model?.increment()}>\n        Increment\n      </button>\n    </div>\n  );\n});"
+}
