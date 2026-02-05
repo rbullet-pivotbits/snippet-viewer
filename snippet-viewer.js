@@ -382,7 +382,7 @@
             color: #6e7781;
             font-family: 'Fira Code', 'Consolas', 'Monaco', monospace;
             font-size: 14px;
-            line-height: 2;
+            line-height: 1.72;
             min-width: fit-content;
           }
 
