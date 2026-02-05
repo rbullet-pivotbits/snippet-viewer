@@ -198,6 +198,7 @@
       super();
       this.attachShadow({ mode: "open" });
       this._rendered = false;
+      this._currentCode = "";
     }
 
     connectedCallback() {
@@ -245,6 +246,7 @@
           return;
         }
 
+        this._currentCode = code;
         this.renderCode(code);
       } catch (error) {
         this.renderError(`Failed to load snippet: ${error.message}`);
@@ -282,6 +284,31 @@
       return fetchPromise;
     }
 
+    async copyToClipboard() {
+      try {
+        await navigator.clipboard.writeText(this._currentCode);
+        
+        // Show feedback
+        const button = this.shadowRoot.querySelector(".copy-button");
+        if (button) {
+          const originalText = button.innerHTML;
+          button.innerHTML = `
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M13.5 4L6 11.5L2.5 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          `;
+          button.classList.add("copied");
+          
+          setTimeout(() => {
+            button.innerHTML = originalText;
+            button.classList.remove("copied");
+          }, 2000);
+        }
+      } catch (err) {
+        console.error("Failed to copy code:", err);
+      }
+    }
+
     render() {
       const theme = getTheme();
       this.shadowRoot.innerHTML = `
@@ -296,6 +323,7 @@
             border: 1px solid #e1e4e8;
             border-radius: 6px;
             overflow: hidden;
+            position: relative;
           }
 
           .header {
@@ -304,6 +332,44 @@
             border-bottom: 1px solid #e1e4e8;
             font-size: 12px;
             color: #586069;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+          }
+
+          .copy-button {
+            background: transparent;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            padding: 4px 8px;
+            cursor: pointer;
+            color: #586069;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            opacity: 0;
+            transition: all 0.2s ease;
+          }
+
+          .container:hover .copy-button {
+            opacity: 1;
+          }
+
+          .copy-button:hover {
+            background: #ffffff;
+            border-color: #9ca3af;
+            color: #24292e;
+          }
+
+          .copy-button:active {
+            background: #f3f4f6;
+          }
+
+          .copy-button.copied {
+            color: #22863a;
+            border-color: #22863a;
+            opacity: 1;
           }
 
           pre {
@@ -329,26 +395,43 @@
           }
         </style>
         <div class="container">
-          <div class="header"></div>
+          <div class="header">
+            <span class="filename"></span>
+            <button class="copy-button" title="Copy code">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M10.5 3.5H12.5C13.0523 3.5 13.5 3.94772 13.5 4.5V13.5C13.5 14.0523 13.0523 14.5 12.5 14.5H5.5C4.94772 14.5 4.5 14.0523 4.5 13.5V12.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                <rect x="2.5" y="1.5" width="8" height="10" rx="1" stroke="currentColor" stroke-width="1.5"/>
+              </svg>
+              Copy
+            </button>
+          </div>
           <pre><code></code></pre>
         </div>
       `;
+
+      // Add click handler to copy button
+      const copyButton = this.shadowRoot.querySelector(".copy-button");
+      if (copyButton) {
+        copyButton.addEventListener("click", () => this.copyToClipboard());
+      }
     }
 
     async renderCode(code) {
       let header = this.shadowRoot?.querySelector(".header");
+      let filenameSpan = this.shadowRoot?.querySelector(".filename");
       let codeElement = this.shadowRoot?.querySelector("code");
       let pre = this.shadowRoot?.querySelector("pre");
 
       // Re-render if elements are missing
-      if (!header || !codeElement || !pre) {
+      if (!header || !filenameSpan || !codeElement || !pre) {
         this.render();
         header = this.shadowRoot.querySelector(".header");
+        filenameSpan = this.shadowRoot.querySelector(".filename");
         codeElement = this.shadowRoot.querySelector("code");
         pre = this.shadowRoot.querySelector("pre");
       }
 
-      if (!header || !codeElement || !pre) return;
+      if (!header || !filenameSpan || !codeElement || !pre) return;
 
       // Extract filename from snippet key (e.g., "counter-model@counter-model.ts" -> "counter-model.ts")
       const filename = this.snippet.includes("@")
@@ -359,7 +442,7 @@
       const ext = filename.split(".").pop()?.toLowerCase() || "";
       const language = languageMap[ext] || "javascript";
 
-      header.textContent = filename;
+      filenameSpan.textContent = filename;
 
       // Try to use Prism for syntax highlighting
       try {
@@ -384,36 +467,54 @@
 
     renderError(message) {
       let header = this.shadowRoot?.querySelector(".header");
+      let filenameSpan = this.shadowRoot?.querySelector(".filename");
       let pre = this.shadowRoot?.querySelector("pre");
+      let copyButton = this.shadowRoot?.querySelector(".copy-button");
 
       // Re-render if elements are missing
-      if (!header || !pre) {
+      if (!header || !filenameSpan || !pre) {
         this.render();
         header = this.shadowRoot.querySelector(".header");
+        filenameSpan = this.shadowRoot.querySelector(".filename");
         pre = this.shadowRoot.querySelector("pre");
+        copyButton = this.shadowRoot.querySelector(".copy-button");
       }
 
-      if (!header || !pre) return;
+      if (!header || !filenameSpan || !pre) return;
 
-      header.textContent = "Error";
+      filenameSpan.textContent = "Error";
       pre.innerHTML = `<span class="error">${this.escapeHtml(message)}</span>`;
+      
+      // Hide copy button on error
+      if (copyButton) {
+        copyButton.style.display = "none";
+      }
     }
 
     renderLoading() {
       let header = this.shadowRoot?.querySelector(".header");
+      let filenameSpan = this.shadowRoot?.querySelector(".filename");
       let pre = this.shadowRoot?.querySelector("pre");
+      let copyButton = this.shadowRoot?.querySelector(".copy-button");
 
       // Re-render if elements are missing
-      if (!header || !pre) {
+      if (!header || !filenameSpan || !pre) {
         this.render();
         header = this.shadowRoot.querySelector(".header");
+        filenameSpan = this.shadowRoot.querySelector(".filename");
         pre = this.shadowRoot.querySelector("pre");
+        copyButton = this.shadowRoot.querySelector(".copy-button");
       }
 
-      if (!header || !pre) return;
+      if (!header || !filenameSpan || !pre) return;
 
-      header.textContent = "Loading...";
+      filenameSpan.textContent = "Loading...";
       pre.innerHTML = '<span class="loading">Loading snippet...</span>';
+      
+      // Hide copy button while loading
+      if (copyButton) {
+        copyButton.style.display = "none";
+      }
     }
 
     escapeHtml(text) {
