@@ -366,16 +366,41 @@
             border-color: #22863a;
           }
 
+          .code-wrapper {
+            display: flex;
+            overflow-x: auto;
+          }
+
+          .line-numbers {
+            padding: 17.1px 0 0 0;
+            padding-left: 16px;
+            padding-right: 12px;
+            text-align: right;
+            user-select: none;
+            border-right: 1px solid #e1e4e8;
+            background: #f6f8fa;
+            color: #6e7781;
+            font-family: 'Fira Code', 'Consolas', 'Monaco', monospace;
+            font-size: 14px;
+            line-height: 1.72;
+            min-width: fit-content;
+          }
+
+          .line-numbers span {
+            display: block;
+          }
+
           pre {
-            margin: 0;
+            margin: 0 !important;
             padding: 16px;
             overflow-x: auto;
+            flex: 1;
           }
 
           code {
             font-family: 'Fira Code', 'Consolas', 'Monaco', monospace;
             font-size: 14px;
-            line-height: 1.5;
+            line-height: 1.569;
             white-space: pre;
           }
 
@@ -387,6 +412,9 @@
           .loading {
             color: #586069;
           }
+
+      
+
         </style>
         <div class="container">
           <div class="header">
@@ -398,7 +426,10 @@
               </svg>
             </button>
           </div>
-          <pre><code></code></pre>
+          <div class="code-wrapper">
+            <div class="line-numbers"></div>
+            <pre><code></code></pre>
+          </div>
         </div>
       `;
 
@@ -414,17 +445,19 @@
       let filenameSpan = this.shadowRoot?.querySelector(".filename");
       let codeElement = this.shadowRoot?.querySelector("code");
       let pre = this.shadowRoot?.querySelector("pre");
+      let lineNumbers = this.shadowRoot?.querySelector(".line-numbers");
 
       // Re-render if elements are missing
-      if (!header || !filenameSpan || !codeElement || !pre) {
+      if (!header || !filenameSpan || !codeElement || !pre || !lineNumbers) {
         this.render();
         header = this.shadowRoot.querySelector(".header");
         filenameSpan = this.shadowRoot.querySelector(".filename");
         codeElement = this.shadowRoot.querySelector("code");
         pre = this.shadowRoot.querySelector("pre");
+        lineNumbers = this.shadowRoot.querySelector(".line-numbers");
       }
 
-      if (!header || !filenameSpan || !codeElement || !pre) return;
+      if (!header || !filenameSpan || !codeElement || !pre || !lineNumbers) return;
 
       // Extract filename from snippet key (e.g., "counter-model@counter-model.ts" -> "counter-model.ts")
       const filename = this.snippet.includes("@")
@@ -436,6 +469,15 @@
       const language = languageMap[ext] || "javascript";
 
       filenameSpan.textContent = filename;
+
+      // Count lines in code
+      const lines = code.split('\n');
+      const lineCount = lines.length;
+
+      // Generate line numbers
+      lineNumbers.innerHTML = Array.from({ length: lineCount }, (_, i) => 
+        `<span>${i + 1}</span>`
+      ).join('');
 
       // Try to use Prism for syntax highlighting
       try {
@@ -463,6 +505,7 @@
       let filenameSpan = this.shadowRoot?.querySelector(".filename");
       let pre = this.shadowRoot?.querySelector("pre");
       let copyButton = this.shadowRoot?.querySelector(".copy-button");
+      let lineNumbers = this.shadowRoot?.querySelector(".line-numbers");
 
       // Re-render if elements are missing
       if (!header || !filenameSpan || !pre) {
@@ -471,12 +514,18 @@
         filenameSpan = this.shadowRoot.querySelector(".filename");
         pre = this.shadowRoot.querySelector("pre");
         copyButton = this.shadowRoot.querySelector(".copy-button");
+        lineNumbers = this.shadowRoot.querySelector(".line-numbers");
       }
 
       if (!header || !filenameSpan || !pre) return;
 
       filenameSpan.textContent = "Error";
       pre.innerHTML = `<span class="error">${this.escapeHtml(message)}</span>`;
+      
+      // Hide line numbers on error
+      if (lineNumbers) {
+        lineNumbers.style.display = "none";
+      }
       
       // Hide copy button on error
       if (copyButton) {
@@ -489,6 +538,7 @@
       let filenameSpan = this.shadowRoot?.querySelector(".filename");
       let pre = this.shadowRoot?.querySelector("pre");
       let copyButton = this.shadowRoot?.querySelector(".copy-button");
+      let lineNumbers = this.shadowRoot?.querySelector(".line-numbers");
 
       // Re-render if elements are missing
       if (!header || !filenameSpan || !pre) {
@@ -497,12 +547,18 @@
         filenameSpan = this.shadowRoot.querySelector(".filename");
         pre = this.shadowRoot.querySelector("pre");
         copyButton = this.shadowRoot.querySelector(".copy-button");
+        lineNumbers = this.shadowRoot.querySelector(".line-numbers");
       }
 
       if (!header || !filenameSpan || !pre) return;
 
       filenameSpan.textContent = "Loading...";
       pre.innerHTML = '<span class="loading">Loading snippet...</span>';
+      
+      // Hide line numbers while loading
+      if (lineNumbers) {
+        lineNumbers.style.display = "none";
+      }
       
       // Hide copy button while loading
       if (copyButton) {
