@@ -341,19 +341,14 @@
             background: transparent;
             border: 1px solid #d1d5db;
             border-radius: 4px;
-            padding: 4px 8px;
+            padding: 4px;
             cursor: pointer;
             color: #586069;
             font-size: 12px;
             display: flex;
             align-items: center;
             gap: 4px;
-            opacity: 0;
             transition: all 0.2s ease;
-          }
-
-          .container:hover .copy-button {
-            opacity: 1;
           }
 
           .copy-button:hover {
@@ -369,7 +364,6 @@
           .copy-button.copied {
             color: #22863a;
             border-color: #22863a;
-            opacity: 1;
           }
 
           pre {
@@ -402,7 +396,6 @@
                 <path d="M10.5 3.5H12.5C13.0523 3.5 13.5 3.94772 13.5 4.5V13.5C13.5 14.0523 13.0523 14.5 12.5 14.5H5.5C4.94772 14.5 4.5 14.0523 4.5 13.5V12.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
                 <rect x="2.5" y="1.5" width="8" height="10" rx="1" stroke="currentColor" stroke-width="1.5"/>
               </svg>
-              Copy
             </button>
           </div>
           <pre><code></code></pre>
