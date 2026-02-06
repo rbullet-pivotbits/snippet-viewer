@@ -153,34 +153,41 @@
       const script = document.createElement("script");
       script.src = `${PRISM_CDN}/prism.min.js`;
       script.onload = () => {
-        // Load additional language components
-        const languages = [
-          "typescript",
-          "jsx",
-          "tsx",
-          "bash",
-          "json",
-          "yaml",
-          "python",
-          "java",
-          "c",
-          "cpp",
-          "arduino",
-        ];
-        let loadedCount = 0;
+        // Load line numbers plugin
+        const lineNumbersPlugin = document.createElement("script");
+        lineNumbersPlugin.src = `${PRISM_CDN}/plugins/line-numbers/prism-line-numbers.min.js`;
+        lineNumbersPlugin.onload = () => {
+          // Load additional language components
+          const languages = [
+            "typescript",
+            "jsx",
+            "tsx",
+            "bash",
+            "json",
+            "yaml",
+            "python",
+            "java",
+            "c",
+            "cpp",
+            "arduino",
+          ];
+          let loadedCount = 0;
 
-        languages.forEach((lang) => {
-          const langScript = document.createElement("script");
-          langScript.src = `${PRISM_CDN}/components/prism-${lang}.min.js`;
-          langScript.onload = langScript.onerror = () => {
-            loadedCount++;
-            if (loadedCount === languages.length) {
-              prismReady = true;
-              resolve(global.Prism);
-            }
-          };
-          document.head.appendChild(langScript);
-        });
+          languages.forEach((lang) => {
+            const langScript = document.createElement("script");
+            langScript.src = `${PRISM_CDN}/components/prism-${lang}.min.js`;
+            langScript.onload = langScript.onerror = () => {
+              loadedCount++;
+              if (loadedCount === languages.length) {
+                prismReady = true;
+                resolve(global.Prism);
+              }
+            };
+            document.head.appendChild(langScript);
+          });
+        };
+        lineNumbersPlugin.onerror = reject;
+        document.head.appendChild(lineNumbersPlugin);
       };
       script.onerror = reject;
       document.head.appendChild(script);
@@ -313,6 +320,7 @@
       const theme = getTheme();
       this.shadowRoot.innerHTML = `
         <link rel="stylesheet" href="${PRISM_CDN}/themes/prism-${theme}.min.css">
+        <link rel="stylesheet" href="${PRISM_CDN}/plugins/line-numbers/prism-line-numbers.min.css">
         <style>
           :host {
             display: block;
@@ -367,54 +375,30 @@
           }
 
           .code-wrapper {
-            display: flex;
             overflow-x: auto;
-          }
-
-          .line-numbers {
-            padding: 17.1px 0 0 0;
-            padding-left: 16px;
-            padding-right: 12px;
-            text-align: right;
-            user-select: none;
-            border-right: 1px solid #e1e4e8;
-            background: #f6f8fa;
-            color: #6e7781;
-            font-family: 'Fira Code', 'Consolas', 'Monaco', monospace;
-            font-size: 14px;
-            line-height: 2;
-            min-width: fit-content;
-          }
-
-          .line-numbers span {
-            display: block;
           }
 
           pre {
             margin: 0 !important;
-            padding: 16px;
             overflow-x: auto;
-            flex: 1;
           }
 
           code {
             font-family: 'Fira Code', 'Consolas', 'Monaco', monospace;
             font-size: 14px;
-            line-height: 1.569;
             white-space: pre;
           }
 
           .error {
             color: #cb2431;
             background: #ffeef0;
+            padding: 16px;
           }
 
           .loading {
             color: #586069;
+            padding: 16px;
           }
-
-      
-
         </style>
         <div class="container">
           <div class="header">
@@ -427,8 +411,7 @@
             </button>
           </div>
           <div class="code-wrapper">
-            <div class="line-numbers"></div>
-            <pre><code></code></pre>
+            <pre class="line-numbers"><code></code></pre>
           </div>
         </div>
       `;
@@ -445,19 +428,17 @@
       let filenameSpan = this.shadowRoot?.querySelector(".filename");
       let codeElement = this.shadowRoot?.querySelector("code");
       let pre = this.shadowRoot?.querySelector("pre");
-      let lineNumbers = this.shadowRoot?.querySelector(".line-numbers");
 
       // Re-render if elements are missing
-      if (!header || !filenameSpan || !codeElement || !pre || !lineNumbers) {
+      if (!header || !filenameSpan || !codeElement || !pre) {
         this.render();
         header = this.shadowRoot.querySelector(".header");
         filenameSpan = this.shadowRoot.querySelector(".filename");
         codeElement = this.shadowRoot.querySelector("code");
         pre = this.shadowRoot.querySelector("pre");
-        lineNumbers = this.shadowRoot.querySelector(".line-numbers");
       }
 
-      if (!header || !filenameSpan || !codeElement || !pre || !lineNumbers) return;
+      if (!header || !filenameSpan || !codeElement || !pre) return;
 
       // Extract filename from snippet key (e.g., "counter-model@counter-model.ts" -> "counter-model.ts")
       const filename = this.snippet.includes("@")
@@ -470,62 +451,42 @@
 
       filenameSpan.textContent = filename;
 
-      // Count lines in code
-      const lines = code.split('\n');
-      const lineCount = lines.length;
-
-      // Generate line numbers
-      lineNumbers.innerHTML = Array.from({ length: lineCount }, (_, i) => 
-        `<span>${i + 1}</span>`
-      ).join('');
+      // Set the code content and classes first
+      codeElement.textContent = code;
+      pre.className = `line-numbers language-${language}`;
+      codeElement.className = `language-${language}`;
 
       // Try to use Prism for syntax highlighting
       try {
         const Prism = await loadPrism();
         if (Prism && Prism.languages[language]) {
-          codeElement.innerHTML = Prism.highlight(
-            code,
-            Prism.languages[language],
-            language
-          );
-        } else {
-          codeElement.textContent = code;
+          // Use highlightElement instead of highlight to trigger plugins
+          Prism.highlightElement(codeElement);
         }
       } catch {
-        // Fallback to plain text if Prism fails
-        codeElement.textContent = code;
+        // Fallback to plain text if Prism fails (already set above)
       }
-
-      pre.className = `language-${language}`;
-      codeElement.className = `language-${language}`;
     }
 
     renderError(message) {
       let header = this.shadowRoot?.querySelector(".header");
       let filenameSpan = this.shadowRoot?.querySelector(".filename");
-      let pre = this.shadowRoot?.querySelector("pre");
+      let codeWrapper = this.shadowRoot?.querySelector(".code-wrapper");
       let copyButton = this.shadowRoot?.querySelector(".copy-button");
-      let lineNumbers = this.shadowRoot?.querySelector(".line-numbers");
 
       // Re-render if elements are missing
-      if (!header || !filenameSpan || !pre) {
+      if (!header || !filenameSpan || !codeWrapper) {
         this.render();
         header = this.shadowRoot.querySelector(".header");
         filenameSpan = this.shadowRoot.querySelector(".filename");
-        pre = this.shadowRoot.querySelector("pre");
+        codeWrapper = this.shadowRoot.querySelector(".code-wrapper");
         copyButton = this.shadowRoot.querySelector(".copy-button");
-        lineNumbers = this.shadowRoot.querySelector(".line-numbers");
       }
 
-      if (!header || !filenameSpan || !pre) return;
+      if (!header || !filenameSpan || !codeWrapper) return;
 
       filenameSpan.textContent = "Error";
-      pre.innerHTML = `<span class="error">${this.escapeHtml(message)}</span>`;
-      
-      // Hide line numbers on error
-      if (lineNumbers) {
-        lineNumbers.style.display = "none";
-      }
+      codeWrapper.innerHTML = `<div class="error">${this.escapeHtml(message)}</div>`;
       
       // Hide copy button on error
       if (copyButton) {
@@ -536,29 +497,22 @@
     renderLoading() {
       let header = this.shadowRoot?.querySelector(".header");
       let filenameSpan = this.shadowRoot?.querySelector(".filename");
-      let pre = this.shadowRoot?.querySelector("pre");
+      let codeWrapper = this.shadowRoot?.querySelector(".code-wrapper");
       let copyButton = this.shadowRoot?.querySelector(".copy-button");
-      let lineNumbers = this.shadowRoot?.querySelector(".line-numbers");
 
       // Re-render if elements are missing
-      if (!header || !filenameSpan || !pre) {
+      if (!header || !filenameSpan || !codeWrapper) {
         this.render();
         header = this.shadowRoot.querySelector(".header");
         filenameSpan = this.shadowRoot.querySelector(".filename");
-        pre = this.shadowRoot.querySelector("pre");
+        codeWrapper = this.shadowRoot.querySelector(".code-wrapper");
         copyButton = this.shadowRoot.querySelector(".copy-button");
-        lineNumbers = this.shadowRoot.querySelector(".line-numbers");
       }
 
-      if (!header || !filenameSpan || !pre) return;
+      if (!header || !filenameSpan || !codeWrapper) return;
 
       filenameSpan.textContent = "Loading...";
-      pre.innerHTML = '<span class="loading">Loading snippet...</span>';
-      
-      // Hide line numbers while loading
-      if (lineNumbers) {
-        lineNumbers.style.display = "none";
-      }
+      codeWrapper.innerHTML = '<div class="loading">Loading snippet...</div>';
       
       // Hide copy button while loading
       if (copyButton) {
