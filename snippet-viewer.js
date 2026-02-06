@@ -296,8 +296,8 @@
         await navigator.clipboard.writeText(this._currentCode);
         
         // Show feedback
-        const button = this.shadowRoot.querySelector(".copy-button");
-        if (button) {
+        if (this._els?.copyButton) {
+          const button = this._els.copyButton;
           const originalText = button.innerHTML;
           button.innerHTML = `
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -416,45 +416,44 @@
         </div>
       `;
 
+      // Cache all element references once
+      this._els = {
+        header: this.shadowRoot.querySelector(".header"),
+        filename: this.shadowRoot.querySelector(".filename"),
+        code: this.shadowRoot.querySelector("code"),
+        pre: this.shadowRoot.querySelector("pre"),
+        codeWrapper: this.shadowRoot.querySelector(".code-wrapper"),
+        copyButton: this.shadowRoot.querySelector(".copy-button"),
+      };
+
       // Add click handler to copy button
-      const copyButton = this.shadowRoot.querySelector(".copy-button");
-      if (copyButton) {
-        copyButton.addEventListener("click", () => this.copyToClipboard());
-      }
+      this._els.copyButton?.addEventListener("click", () => this.copyToClipboard());
     }
 
     async renderCode(code) {
-      let header = this.shadowRoot?.querySelector(".header");
-      let filenameSpan = this.shadowRoot?.querySelector(".filename");
-      let codeElement = this.shadowRoot?.querySelector("code");
-      let pre = this.shadowRoot?.querySelector("pre");
-
-      // Re-render if elements are missing
-      if (!header || !filenameSpan || !codeElement || !pre) {
-        this.render();
-        header = this.shadowRoot.querySelector(".header");
-        filenameSpan = this.shadowRoot.querySelector(".filename");
-        codeElement = this.shadowRoot.querySelector("code");
-        pre = this.shadowRoot.querySelector("pre");
-      }
-
-      if (!header || !filenameSpan || !codeElement || !pre) return;
+      if (!this._els) this.render();
+      const { filename, code: codeElement, pre, copyButton } = this._els;
 
       // Extract filename from snippet key (e.g., "counter-model@counter-model.ts" -> "counter-model.ts")
-      const filename = this.snippet.includes("@")
+      const filenameText = this.snippet.includes("@")
         ? this.snippet.split("@")[1]
         : this.snippet;
 
       // Detect language from file extension
-      const ext = filename.split(".").pop()?.toLowerCase() || "";
+      const ext = filenameText.split(".").pop()?.toLowerCase() || "";
       const language = languageMap[ext] || "javascript";
 
-      filenameSpan.textContent = filename;
+      filename.textContent = filenameText;
 
-      // Set the code content and classes first
+      // Set the code content and classes first (fallback to plain text)
       codeElement.textContent = code;
       pre.className = `line-numbers language-${language}`;
       codeElement.className = `language-${language}`;
+      
+      // Show copy button
+      if (copyButton) {
+        copyButton.style.display = "flex";
+      }
 
       // Try to use Prism for syntax highlighting
       try {
@@ -469,24 +468,14 @@
     }
 
     renderError(message) {
-      let header = this.shadowRoot?.querySelector(".header");
-      let filenameSpan = this.shadowRoot?.querySelector(".filename");
-      let codeWrapper = this.shadowRoot?.querySelector(".code-wrapper");
-      let copyButton = this.shadowRoot?.querySelector(".copy-button");
+      if (!this._els) this.render();
+      const { filename, code: codeElement, pre, copyButton } = this._els;
 
-      // Re-render if elements are missing
-      if (!header || !filenameSpan || !codeWrapper) {
-        this.render();
-        header = this.shadowRoot.querySelector(".header");
-        filenameSpan = this.shadowRoot.querySelector(".filename");
-        codeWrapper = this.shadowRoot.querySelector(".code-wrapper");
-        copyButton = this.shadowRoot.querySelector(".copy-button");
-      }
-
-      if (!header || !filenameSpan || !codeWrapper) return;
-
-      filenameSpan.textContent = "Error";
-      codeWrapper.innerHTML = `<div class="error">${this.escapeHtml(message)}</div>`;
+      filename.textContent = "Error";
+      // Update code element without destroying the structure
+      codeElement.textContent = message;
+      codeElement.className = "";
+      pre.className = "error";
       
       // Hide copy button on error
       if (copyButton) {
@@ -495,24 +484,15 @@
     }
 
     renderLoading() {
-      let header = this.shadowRoot?.querySelector(".header");
-      let filenameSpan = this.shadowRoot?.querySelector(".filename");
-      let codeWrapper = this.shadowRoot?.querySelector(".code-wrapper");
-      let copyButton = this.shadowRoot?.querySelector(".copy-button");
+      if (!this._els) this.render();
+      const { filename, code: codeElement, pre, copyButton } = this._els;
 
-      // Re-render if elements are missing
-      if (!header || !filenameSpan || !codeWrapper) {
-        this.render();
-        header = this.shadowRoot.querySelector(".header");
-        filenameSpan = this.shadowRoot.querySelector(".filename");
-        codeWrapper = this.shadowRoot.querySelector(".code-wrapper");
-        copyButton = this.shadowRoot.querySelector(".copy-button");
-      }
-
-      if (!header || !filenameSpan || !codeWrapper) return;
-
-      filenameSpan.textContent = "Loading...";
-      codeWrapper.innerHTML = '<div class="loading">Loading snippet...</div>';
+      filename.textContent = "Loading...";
+      
+      // Update code element without destroying the structure
+      codeElement.textContent = "Loading snippet...";
+      codeElement.className = "";
+      pre.className = "loading";
       
       // Hide copy button while loading
       if (copyButton) {
