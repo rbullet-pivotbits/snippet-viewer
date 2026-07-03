@@ -14,8 +14,6 @@
 code[class*="language-"],
 pre[class*="language-"] {
   color: #444444;
-  font-family: 'Fira Code', 'Consolas', 'Monaco', monospace;
-  font-size: 14px;
   text-align: left;
   white-space: pre;
   word-spacing: normal;
