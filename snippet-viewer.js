@@ -473,7 +473,7 @@
 
           .copy-button {
             background: transparent;
-            border: 1px solid #d1d5db;
+            border: none;
             border-radius: 4px;
             padding: 4px;
             cursor: pointer;
@@ -487,7 +487,6 @@
 
           .copy-button:hover {
             background: #ffffff;
-            border-color: #9ca3af;
             color: #24292e;
           }
 
@@ -497,7 +496,6 @@
 
           .copy-button.copied {
             color: #22863a;
-            border-color: #22863a;
           }
 
           .code-wrapper {
