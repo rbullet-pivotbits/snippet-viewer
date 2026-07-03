@@ -1,183 +1,247 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Snippet Viewer - Web Component</title>
-  <style>
-    * {
-      box-sizing: border-box;
-    }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      max-width: 800px;
-      margin: 0 auto;
-      padding: 2rem;
-      line-height: 1.6;
-      color: #333;
-    }
-    h1 {
-      border-bottom: 2px solid #eee;
-      padding-bottom: 0.5rem;
-    }
-    code {
-      background: #f4f4f4;
-      padding: 0.2em 0.4em;
-      border-radius: 3px;
-      font-size: 0.9em;
-    }
-    pre {
-      background: #1d1f21;
-      color: #c5c8c6;
-      padding: 1rem;
-      border-radius: 6px;
-      overflow-x: auto;
-    }
-    pre code {
-      background: transparent;
-      padding: 0;
-    }
-    .demo-link {
-      display: inline-block;
-      margin-top: 1rem;
-      padding: 0.75rem 1.5rem;
-      background: #0066cc;
-      color: white;
-      text-decoration: none;
-      border-radius: 6px;
-    }
-    .demo-link:hover {
-      background: #0052a3;
-    }
-    .section {
-      margin: 2rem 0;
-    }
-  </style>
-</head>
-<body>
-  <h1>Snippet Viewer</h1>
-  <p>A vanilla web component for displaying syntax-highlighted code snippets from a JSON file.</p>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Snippet Viewer - Web Component</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          sans-serif;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 2rem;
+        line-height: 1.6;
+        color: #333;
+      }
+      h1 {
+        border-bottom: 2px solid #eee;
+        padding-bottom: 0.5rem;
+      }
+      code {
+        background: #f4f4f4;
+        padding: 0.2em 0.4em;
+        border-radius: 3px;
+        font-size: 0.9em;
+      }
+      pre {
+        background: #1d1f21;
+        color: #c5c8c6;
+        padding: 1rem;
+        border-radius: 6px;
+        overflow-x: auto;
+      }
+      pre code {
+        background: transparent;
+        padding: 0;
+      }
+      .demo-link {
+        display: inline-block;
+        margin-top: 1rem;
+        padding: 0.75rem 1.5rem;
+        background: #0066cc;
+        color: white;
+        text-decoration: none;
+        border-radius: 6px;
+      }
+      .demo-link:hover {
+        background: #0052a3;
+      }
+      .section {
+        margin: 2rem 0;
+      }
+      .note {
+        background: #fff8e1;
+        border-left: 4px solid #ffb300;
+        padding: 1rem;
+        margin: 1rem 0;
+        border-radius: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Snippet Viewer</h1>
+    <p>
+      A vanilla web component for displaying syntax-highlighted code snippets
+      from a JSON file.
+    </p>
 
-  <a href="/example/" class="demo-link">View Demo</a>
+    <a href="/example/" class="demo-link">View Demo</a>
 
-  <div class="section">
-    <h2>Installation</h2>
-    <p>Add the script to your page:</p>
-    <pre><code>&lt;script src="<span class="host-url"></span>/snippet-viewer.js"&gt;&lt;/script&gt;</code></pre>
-  </div>
+    <div class="section">
+      <h2>Installation</h2>
+      <p>Add the script to your page:</p>
+      <pre><code>&lt;script src="<span class="host-url"></span>/snippet-viewer.js"&gt;&lt;/script&gt;</code></pre>
+    </div>
 
-  <div class="section">
-    <h2>Usage</h2>
-    <p>Create a <code>snippets.json</code> file:</p>
-    <pre><code>{
+    <div class="section">
+      <h2>Usage</h2>
+      <p>Create a <code>snippets.json</code> file:</p>
+      <pre><code>{
   "my-function@example.ts": "function hello() {\n  console.log('Hello!');\n}"
 }</code></pre>
 
-    <p>Use the component:</p>
-    <pre><code>&lt;snippet-viewer
+      <p>Use the component:</p>
+      <pre><code>&lt;snippet-viewer
   snippet="my-function@example.ts"
   snippet-host="<span class="host-url"></span>"&gt;
 &lt;/snippet-viewer&gt;</code></pre>
-  </div>
+    </div>
 
-  <div class="section">
-    <h2>With Provider (Multiple Snippets)</h2>
-    <p>Use a provider to share the host across multiple viewers:</p>
-    <pre><code>&lt;snippet-provider snippet-host="<span class="host-url"></span>"&gt;
+    <div class="section">
+      <h2>With Provider (Multiple Snippets)</h2>
+      <p>Use a provider to share the host across multiple viewers:</p>
+      <pre><code>&lt;snippet-provider snippet-host="<span class="host-url"></span>"&gt;
   &lt;snippet-viewer snippet="function-a@file.ts"&gt;&lt;/snippet-viewer&gt;
   &lt;snippet-viewer snippet="function-b@file.ts"&gt;&lt;/snippet-viewer&gt;
 &lt;/snippet-provider&gt;</code></pre>
-  </div>
+    </div>
 
-  <div class="section">
-    <h2>Site-wide Default Host</h2>
-    <p>Set a global default so you don't need provider or attributes on every viewer.</p>
+    <div class="section">
+      <h2>Site-wide Default Host</h2>
+      <p>
+        Set a global default so you don't need provider or attributes on every
+        viewer.
+      </p>
 
-    <p><strong>Option A: Meta tag (recommended)</strong></p>
-    <pre><code>&lt;meta name="snippet-host" content="<span class="host-url"></span>"&gt;
+      <p><strong>Option A: Meta tag (recommended)</strong></p>
+      <pre><code>&lt;meta name="snippet-host" content="<span class="host-url"></span>"&gt;
 &lt;script src="<span class="host-url"></span>/snippet-viewer.js"&gt;&lt;/script&gt;</code></pre>
 
-    <p><strong>Option B: JavaScript API</strong></p>
-    <pre><code>&lt;script src="<span class="host-url"></span>/snippet-viewer.js"&gt;&lt;/script&gt;
+      <p><strong>Option B: JavaScript API</strong></p>
+      <pre><code>&lt;script src="<span class="host-url"></span>/snippet-viewer.js"&gt;&lt;/script&gt;
 &lt;script&gt;SnippetViewer.setDefaultHost('<span class="host-url"></span>');&lt;/script&gt;</code></pre>
 
-    <p>Then use viewers without specifying the host:</p>
-    <pre><code>&lt;snippet-viewer snippet="my-function@example.ts"&gt;&lt;/snippet-viewer&gt;</code></pre>
-  </div>
+      <p>Then use viewers without specifying the host:</p>
+      <pre><code>&lt;snippet-viewer snippet="my-function@example.ts"&gt;&lt;/snippet-viewer&gt;</code></pre>
+    </div>
 
-  <div class="section">
-    <h2>Named Sources (Multiple Files)</h2>
-    <p>When snippets live in more than one file (e.g. one per language or product), give each file a name and reference it with a <code>source</code> attribute. The mapping lives in one place, so posts never hardcode URLs.</p>
+    <div class="section">
+      <h2>Named Sources (Multiple Files)</h2>
+      <p>
+        When snippets live in more than one file (e.g. one per language or
+        product), give each file a name and reference it with a
+        <code>source</code> attribute. The mapping lives in one place, so posts
+        never hardcode URLs.
+      </p>
 
-    <p><strong>Option A: Manifest (recommended)</strong> &mdash; register once in your theme header:</p>
-    <pre><code>&lt;meta name="snippet-sources" content="<span class="host-url"></span>/sources.json"&gt;</code></pre>
-    <p>where <code>sources.json</code> maps names to URLs:</p>
-    <pre><code>{
+      <p>
+        <strong>Option A: Manifest (recommended)</strong> &mdash; register once
+        in your theme header:
+      </p>
+      <pre><code>&lt;meta name="snippet-sources" content="<span class="host-url"></span>/sources.json"&gt;</code></pre>
+      <p>where <code>sources.json</code> maps names to URLs:</p>
+      <pre><code>{
   "java": "<span class="host-url"></span>/java-snippets.json",
   "frontend": "<span class="host-url"></span>/frontend-snippets.json"
 }</code></pre>
 
-    <p><strong>Option B: JavaScript API</strong></p>
-    <pre><code>&lt;script&gt;
+      <p><strong>Option B: JavaScript API</strong></p>
+      <pre><code>&lt;script&gt;
   SnippetViewer.setSources({
     java: '<span class="host-url"></span>/java-snippets.json',
     frontend: '<span class="host-url"></span>/frontend-snippets.json',
   });
 &lt;/script&gt;</code></pre>
 
-    <p>Then name a <code>source</code> per viewer &mdash; or set a default on a provider and override it on a single viewer:</p>
-    <pre><code>&lt;snippet-viewer source="java" snippet="widget-service@WidgetService.java"&gt;&lt;/snippet-viewer&gt;
+      <p>
+        Then name a <code>source</code> per viewer &mdash; or set a default on a
+        provider and override it on a single viewer:
+      </p>
+      <pre><code>&lt;snippet-viewer source="java" snippet="widget-service@WidgetService.java"&gt;&lt;/snippet-viewer&gt;
 
 &lt;snippet-provider source="frontend"&gt;
-  &lt;snippet-viewer snippet="counter@Counter.tsx"&gt;&lt;/snippet-viewer&gt;
-  &lt;snippet-viewer source="java" snippet="describe@WidgetMembers.java"&gt;&lt;/snippet-viewer&gt;
+  &lt;snippet-viewer snippet="counter@Counter.tsx"&gt;&lt;/snippet-viewer>
+  &lt;snippet-viewer source="java" snippet="describe@WidgetMembers.java"&gt;&lt;/snippet-viewer>
 &lt;/snippet-provider&gt;</code></pre>
 
-    <p>A <code>source</code> wins over <code>snippet-host</code>; without one, the legacy <code><span class="host-url"></span>/snippets.json</code> path is used, so existing pages keep working. Each file is fetched once and cached by URL.</p>
-  </div>
+      <p>
+        A <code>source</code> wins over <code>snippet-host</code>; without one,
+        the legacy
+        <code><span class="host-url"></span>/snippets.json</code> path is used,
+        so existing pages keep working. Each file is fetched once and cached by
+        URL.
+      </p>
+    </div>
 
-  <div class="section">
-    <h2>Theme Configuration</h2>
-    <p>Customize the syntax highlighting theme (must be set before snippets load).</p>
+    <div class="section">
+      <h2>Theme Configuration</h2>
+      <p>
+        Customize the syntax highlighting theme (must be set before snippets
+        load). The engine will decide where to load the asset file based on your
+        theme selection name.
+      </p>
 
-    <p><strong>Option A: Meta tag</strong></p>
-    <pre><code>&lt;meta name="snippet-theme" content="okaidia"&gt;</code></pre>
+      <h3>Approach 1: Built-in CDN Themes</h3>
+      <p>
+        If you choose a standard Prism theme, the component automatically
+        requests it from a high-performance public CDN.
+      </p>
+      <p><strong>Meta Tag Format:</strong></p>
+      <pre><code>&lt;meta name="snippet-theme" content="okaidia"&gt;</code></pre>
+      <p><strong>JavaScript API Format:</strong></p>
+      <pre><code>&lt;script&gt;SnippetViewer.setTheme('okaidia');&lt;/script&gt;</code></pre>
+      <p>
+        Available CDN options: <code>tomorrow</code> (default),
+        <code>okaidia</code>, <code>twilight</code>, <code>coy</code>,
+        <code>solarizedlight</code>, <code>dark</code>.
+      </p>
 
-    <p><strong>Option B: JavaScript API</strong></p>
-    <pre><code>&lt;script&gt;SnippetViewer.setTheme('okaidia');&lt;/script&gt;</code></pre>
+      <h3>Approach 2: Custom Themes (Zero-Config)</h3>
+      <p>
+        If you specify any custom name outside the standard list (e.g.,
+        <code>kondra-code</code>), the engine switches behavior and dynamically
+        builds an asset path pointing to your local asset host.
+      </p>
+      <p><strong>Meta Tag Format:</strong></p>
+      <pre><code>&lt;meta name="snippet-theme" content="kondra-code"&gt;</code></pre>
+      <p><strong>JavaScript API Format:</strong></p>
+      <pre><code>&lt;script&gt;SnippetViewer.setTheme('kondra-code');&lt;/script&gt;</code></pre>
+    </div>
 
-    <p>Available themes: <code>tomorrow</code> (default), <code>okaidia</code>, <code>twilight</code>, <code>coy</code>, <code>solarizedlight</code>, <code>dark</code></p>
-  </div>
+    <div class="section">
+      <h2>Features</h2>
+      <ul>
+        <li>Syntax highlighting via Prism.js (loaded automatically)</li>
+        <li>
+          Configurable themes (tomorrow, okaidia, twilight, coy, solarizedlight,
+          dark)
+        </li>
+        <li>Auto-detects language from file extension</li>
+        <li>Shared cache across all instances</li>
+        <li>Shadow DOM isolation (safe for WordPress)</li>
+        <li>Provider component for multiple snippets</li>
+        <li>Global default host via meta tag or JavaScript API</li>
+        <li>
+          Named sources for pulling from multiple snippet files via one manifest
+        </li>
+        <li>
+          Supports TypeScript, JavaScript, Java, Python, C, C++, Arduino, and
+          more
+        </li>
+      </ul>
+    </div>
 
-  <div class="section">
-    <h2>Features</h2>
-    <ul>
-      <li>Syntax highlighting via Prism.js (loaded automatically)</li>
-      <li>Configurable themes (tomorrow, okaidia, twilight, coy, solarizedlight, dark)</li>
-      <li>Auto-detects language from file extension</li>
-      <li>Shared cache across all instances</li>
-      <li>Shadow DOM isolation (safe for WordPress)</li>
-      <li>Provider component for multiple snippets</li>
-      <li>Global default host via meta tag or JavaScript API</li>
-      <li>Named sources for pulling from multiple snippet files via one manifest</li>
-      <li>Supports TypeScript, JavaScript, Java, Python, C, C++, Arduino, and more</li>
-    </ul>
-  </div>
+    <div class="section">
+      <h2>Snippet Key Format</h2>
+      <p>Keys use the format: <code>name@filename.ext</code></p>
+      <ul>
+        <li><code>name</code> - Identifier for the snippet</li>
+        <li>
+          <code>filename.ext</code> - Displayed in header, extension determines
+          syntax highlighting
+        </li>
+      </ul>
+    </div>
 
-  <div class="section">
-    <h2>Snippet Key Format</h2>
-    <p>Keys use the format: <code>name@filename.ext</code></p>
-    <ul>
-      <li><code>name</code> - Identifier for the snippet</li>
-      <li><code>filename.ext</code> - Displayed in header, extension determines syntax highlighting</li>
-    </ul>
-  </div>
-
-  <script>
-    // Populate all host-url placeholders with the current origin
-    document.querySelectorAll('.host-url').forEach(el => {
-      el.textContent = window.location.origin;
-    });
-  </script>
-</body>
+    <script>
+      // Populate all host-url placeholders with the current origin
+      document.querySelectorAll(".host-url").forEach((el) => {
+        el.textContent = window.location.origin;
+      });
+    </script>
+  </body>
 </html>

@@ -4,58 +4,59 @@
  * Fetches and displays code snippets from a JSON file.
  *
  * Usage (standalone):
- *   <snippet-viewer
- *     snippet="counter-model@counter-model.ts"
- *     snippet-host="https://example.com/snippets">
- *   </snippet-viewer>
+ * <snippet-viewer
+ * snippet="counter-model@counter-model.ts"
+ * snippet-host="https://example.com/snippets">
+ * </snippet-viewer>
  *
  * Usage (with provider - recommended for multiple snippets from one source):
- *   <snippet-provider snippet-host="https://example.com/snippets">
- *     <snippet-viewer snippet="counter-model@counter-model.ts"></snippet-viewer>
- *     <snippet-viewer snippet="future-model@futures-model.ts"></snippet-viewer>
- *   </snippet-provider>
+ * <snippet-provider snippet-host="https://example.com/snippets">
+ * <snippet-viewer snippet="counter-model@counter-model.ts"></snippet-viewer>
+ * <snippet-viewer snippet="future-model@futures-model.ts"></snippet-viewer>
+ * </snippet-provider>
  *
  * Usage (named sources - for MULTIPLE snippet files):
- *   Register names -> URLs once (see WordPress Option 3 below), then reference a
- *   `source` per viewer or per provider. A viewer's own source/host wins over a
- *   provider's, so a subtree can default to one file and opt a viewer into another:
+ * Register names -> URLs once (see WordPress Option 3 below), then reference a
+ * `source` per viewer or per provider. A viewer's own source/host wins over a
+ * provider's, so a subtree can default to one file and opt a viewer into another:
  *
- *   <snippet-viewer source="java" snippet="java-class@WidgetService.java"></snippet-viewer>
- *   <snippet-provider source="react">
- *     <snippet-viewer snippet="react-component@Counter.tsx"></snippet-viewer>
- *     <snippet-viewer source="java" snippet="java-method@WidgetMembers.java"></snippet-viewer>
- *   </snippet-provider>
+ * <snippet-viewer source="java" snippet="java-class@WidgetService.java"></snippet-viewer>
+ * <snippet-provider source="react">
+ * <snippet-viewer snippet="react-component@Counter.tsx"></snippet-viewer>
+ * <snippet-viewer source="java" snippet="java-method@WidgetMembers.java"></snippet-viewer>
+ * </snippet-provider>
  *
  * WordPress usage (Option 1 - meta tag, add to theme header):
- *   <meta name="snippet-host" content="https://your-site.netlify.app">
- *   <meta name="snippet-theme" content="okaidia">
- *   <script src="https://your-cdn.com/snippet-viewer.js"></script>
+ * <meta name="snippet-host" content="https://your-site.netlify.app">
+ * <meta name="snippet-theme" content="okaidia">
+ * <script src="https://your-cdn.com/snippet-viewer.js"></script>
  *
  * WordPress usage (Option 2 - JavaScript, add to theme header):
- *   <script src="https://your-cdn.com/snippet-viewer.js"></script>
- *   <script>
- *     SnippetViewer.setDefaultHost('https://your-site.netlify.app');
- *     SnippetViewer.setTheme('okaidia');
- *   </script>
+ * <script src="https://your-cdn.com/snippet-viewer.js"></script>
+ * <script>
+ * SnippetViewer.setDefaultHost('https://your-site.netlify.app');
+ * SnippetViewer.setTheme('okaidia');
+ * </script>
  *
- * Available themes: 'tomorrow' (default), 'okaidia', 'twilight', 'coy', 'solarizedlight', 'dark'
+ * Available CDN themes: 'tomorrow' (default), 'okaidia', 'twilight', 'coy', 'solarizedlight', 'dark'
+ * Any other custom theme string string will dynamically fetch from your local `/theme/prism-[theme].css`.
  *
  * WordPress usage (Option 3 - named sources for MULTIPLE files):
- *   A. Manifest (recommended - update one JSON, every post follows):
- *      <meta name="snippet-sources" content="https://your-cdn.com/sources.json">
- *      where sources.json is:
- *        { "java": "https://.../java.json", "react": "https://.../react.json" }
- *   B. Or register in JS (theme header):
- *      <script>
- *        SnippetViewer.setSources({
- *          java: 'https://your-cdn.com/java.json',
- *          react: 'https://your-cdn.com/react.json',
- *        });
- *      </script>
- *   Then in posts: <snippet-viewer source="java" snippet="java-class@WidgetService.java">
+ * A. Manifest (recommended - update one JSON, every post follows):
+ * <meta name="snippet-sources" content="https://your-cdn.com/sources.json">
+ * where sources.json is:
+ * { "java": "https://.../java.json", "react": "https://.../react.json" }
+ * B. Or register in JS (theme header):
+ * <script>
+ * SnippetViewer.setSources({
+ * java: 'https://your-cdn.com/java.json',
+ * react: 'https://your-cdn.com/react.json',
+ * });
+ * </script>
+ * Then in posts: <snippet-viewer source="java" snippet="java-class@WidgetService.java">
  *
  * Then in any post/page, just use:
- *   <snippet-viewer snippet="my-code@example.ts"></snippet-viewer>
+ * <snippet-viewer snippet="my-code@example.ts"></snippet-viewer>
  *
  * Resolution: a `source` name maps to a full snippets.json URL via the registry;
  * otherwise the component fetches {snippetHost}/snippets.json (legacy default).
@@ -77,17 +78,21 @@
   };
 
   // Default theme if none configured
-  const DEFAULT_THEME = "tomorrow"; // Options: 'tomorrow', 'okaidia', 'twilight', 'coy', 'solarizedlight', 'dark'
+  const DEFAULT_THEME = "tomorrow";
+
+  // List of standard themes supported globally by the Prism CDN core
+  const STANDARD_CDN_THEMES = [
+    "tomorrow",
+    "okaidia",
+    "twilight",
+    "coy",
+    "solarizedlight",
+    "dark",
+  ];
 
   /**
    * Set global snippet host for all viewers.
    * Call this once in your site header and all snippet-viewers will use it automatically.
-   *
-   * Usage:
-   *   SnippetViewer.setDefaultHost('https://your-site.netlify.app');
-   *
-   * Or via meta tag (parsed automatically):
-   *   <meta name="snippet-host" content="https://your-site.netlify.app">
    */
   function setDefaultHost(host) {
     config.snippetHost = host;
@@ -107,14 +112,6 @@
   /**
    * Set global Prism.js theme for syntax highlighting.
    * Must be called BEFORE any snippet-viewer elements are rendered.
-   *
-   * Usage:
-   *   SnippetViewer.setTheme('okaidia');
-   *
-   * Or via meta tag (parsed automatically):
-   *   <meta name="snippet-theme" content="okaidia">
-   *
-   * Available themes: 'tomorrow', 'okaidia', 'twilight', 'coy', 'solarizedlight', 'dark'
    */
   function setTheme(theme) {
     config.theme = theme;
@@ -187,7 +184,9 @@
           if (!sources.has(name)) sources.set(name, url);
         });
       } catch (err) {
-        console.error(`snippet-viewer: failed to load sources manifest: ${err.message}`);
+        console.error(
+          `snippet-viewer: failed to load sources manifest: ${err.message}`,
+        );
       }
     })();
     return sourcesManifestPromise;
@@ -371,7 +370,6 @@
     }
 
     async loadSnippet() {
-      // Ensure shadow DOM is ready
       if (!this._rendered) {
         return;
       }
@@ -412,7 +410,7 @@
     async copyToClipboard() {
       try {
         await navigator.clipboard.writeText(this._currentCode);
-        
+
         // Show feedback
         if (this._els?.copyButton) {
           const button = this._els.copyButton;
@@ -423,7 +421,7 @@
             </svg>
           `;
           button.classList.add("copied");
-          
+
           setTimeout(() => {
             button.innerHTML = originalText;
             button.classList.remove("copied");
@@ -436,8 +434,18 @@
 
     render() {
       const theme = getTheme();
+      const host = this.snippetHost.replace(/\/$/, "");
+
+      // ROBUST DYNAMIC THEME ENGINE:
+      // Instantly checks if the set theme is a native cloud-hosted Prism CDN theme.
+      // If it isn't listed (e.g. "kondra-code", "my-dark-theme", etc.), the framework
+      // automatically switches to local lookup conventions relative to your host URL.
+      const themeUrl = STANDARD_CDN_THEMES.includes(theme)
+        ? `${PRISM_CDN}/themes/prism-${theme}.min.css`
+        : `${host}/theme/prism-${theme}.css`;
+
       this.shadowRoot.innerHTML = `
-        <link rel="stylesheet" href="${PRISM_CDN}/themes/prism-${theme}.min.css">
+        <link rel="stylesheet" href="${themeUrl}">
         <link rel="stylesheet" href="${PRISM_CDN}/plugins/line-numbers/prism-line-numbers.min.css">
         <style>
           :host {
@@ -545,7 +553,9 @@
       };
 
       // Add click handler to copy button
-      this._els.copyButton?.addEventListener("click", () => this.copyToClipboard());
+      this._els.copyButton?.addEventListener("click", () =>
+        this.copyToClipboard(),
+      );
     }
 
     async renderCode(code) {
@@ -567,7 +577,7 @@
       codeElement.textContent = code;
       pre.className = `line-numbers language-${language}`;
       codeElement.className = `language-${language}`;
-      
+
       // Show copy button
       if (copyButton) {
         copyButton.style.display = "flex";
@@ -594,7 +604,7 @@
       codeElement.textContent = message;
       codeElement.className = "";
       pre.className = "error";
-      
+
       // Hide copy button on error
       if (copyButton) {
         copyButton.style.display = "none";
@@ -606,12 +616,12 @@
       const { filename, code: codeElement, pre, copyButton } = this._els;
 
       filename.textContent = "Loading...";
-      
+
       // Update code element without destroying the structure
       codeElement.textContent = "Loading snippet...";
       codeElement.className = "";
       pre.className = "loading";
-      
+
       // Hide copy button while loading
       if (copyButton) {
         copyButton.style.display = "none";
@@ -668,7 +678,10 @@
     }
 
     attributeChangedCallback(name, oldValue, newValue) {
-      if (oldValue !== newValue && (name === "snippet-host" || name === "source")) {
+      if (
+        oldValue !== newValue &&
+        (name === "snippet-host" || name === "source")
+      ) {
         this.prefetch();
       }
     }
@@ -709,7 +722,7 @@
         new CustomEvent("snippets-loaded", {
           bubbles: false,
           detail: { snippets: this._snippets, error: this._error },
-        })
+        }),
       );
 
       // Push this provider's source/host down to child viewers that don't carry
@@ -717,7 +730,10 @@
       // alone, so a single viewer can opt into a different source mid-subtree.
       const viewers = this.querySelectorAll("snippet-viewer");
       viewers.forEach((viewer) => {
-        if (viewer.hasAttribute("source") || viewer.hasAttribute("snippet-host")) {
+        if (
+          viewer.hasAttribute("source") ||
+          viewer.hasAttribute("snippet-host")
+        ) {
           return;
         }
         if (this.source) {

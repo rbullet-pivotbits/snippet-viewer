@@ -1,4 +1,4 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -11,12 +11,13 @@
       // Set default host and theme before body is parsed (so snippet-viewers see it when they connect)
       SnippetViewer.setDefaultHost(new URL("./", window.location.href).href);
       SnippetViewer.setTheme("okaidia");
+      // SnippetViewer.setTheme("kondra-code"); for custom theme 'kondra-code'
     </script>
     <title>Snippet Viewer Demo</title>
     <style>
       body {
-        font-family:
-          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          sans-serif;
         max-width: 800px;
         margin: 0 auto;
         padding: 2rem;
@@ -89,12 +90,12 @@
       <h2>Named Sources (multiple snippet files)</h2>
       <p>
         With a manifest registered via
-        <code>&lt;meta name="snippet-sources" content="./sources.json"&gt;</code>,
-        each viewer can pull from a different file by naming a
-        <code>source</code>. The manifest here maps
-        <code>frontend</code> &rarr; <code>frontend-snippets.json</code> and
-        <code>java</code> &rarr; <code>java-snippets.json</code> &mdash; both
-        produced by the snippet-extractor from the smoke-test fixtures.
+        <code>&lt;meta name="snippet-sources" content="./sources.json"&gt;</code
+        >, each viewer can pull from a different file by naming a
+        <code>source</code>. The manifest here maps <code>frontend</code> &rarr;
+        <code>frontend-snippets.json</code> and <code>java</code> &rarr;
+        <code>java-snippets.json</code> &mdash; both produced by the
+        snippet-extractor from the smoke-test fixtures.
       </p>
 
       <p>A TypeScript class from the <code>frontend</code> source:</p>
