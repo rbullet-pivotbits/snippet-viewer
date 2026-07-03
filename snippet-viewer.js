@@ -486,7 +486,7 @@
           }
 
           .copy-button:hover {
-            background: #ffffff;
+
             color: #24292e;
           }
 
