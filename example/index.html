@@ -14,6 +14,10 @@
 
       // Set default host and theme before body is parsed (so snippet-viewers see it when they connect)
       SnippetViewer.setDefaultHost(new URL("./", window.location.href).href);
+      SnippetViewer.registerTheme(
+        "kondra-code",
+        new URL("../theme/prism-kondra-code.css", window.location.href).href,
+      );
       SnippetViewer.setTheme(savedTheme);
       // SnippetViewer.setTheme("kondra-code"); for custom theme 'kondra-code'
     </script>
@@ -132,7 +136,7 @@
         <code>&lt;meta name="snippet-sources" content="./sources.json"&gt;</code
         >, each viewer can pull from a different file by naming a
         <code>source</code>. The manifest here maps <code>frontend</code> &rarr;
-        <code>frontend-snippets.json</code> and <code>java Ram</code> &rarr;
+        <code>frontend-snippets.json</code> and <code>java</code> &rarr;
         <code>java-snippets.json</code> &mdash; both produced by the
         snippet-extractor from the smoke-test fixtures.
       </p>

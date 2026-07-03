@@ -93,3 +93,65 @@ pre[class*="language-"].line-numbers > code {
 .token.deleted {
   color: #383a42;
 }
+
+
+.token.boolean,
+.token.number {
+  color: #986801;
+}
+ 
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+  color: #50a14f;
+}
+ 
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string {
+  color: #383a42;
+}
+ 
+.token.atrule,
+.token.attr-value,
+.token.keyword {
+  color: #a626a4;
+}
+ 
+/* Decorators (e.g. @kosConfigProperty) and function calls */
+.token.function,
+.token.decorator,
+.token.annotation {
+  color: #c18401;
+}
+ 
+/* Types, interfaces, class names (e.g. KosConfigProperty<string>) */
+.token.class-name,
+.token.maybe-class-name,
+.token.builtin-type {
+  color: #0184bc;
+}
+ 
+.token.regex,
+.token.important,
+.token.variable {
+  color: #e45649;
+}
+ 
+.token.important,
+.token.bold {
+  font-weight: bold;
+}
+ 
+.token.italic {
+  font-style: italic;
+}
+ 
+.token.entity {
+  cursor: help;
+}

@@ -39,7 +39,9 @@
  * </script>
  *
  * Available CDN themes: 'tomorrow' (default), 'okaidia', 'twilight', 'coy', 'solarizedlight', 'dark'
- * Any other custom theme string string will dynamically fetch from your local `/theme/prism-[theme].css`.
+ * Any other theme name is resolved via the custom-theme registry (see below);
+ * if it's not registered there either, it falls back to trying the CDN path
+ * with that name (which will 404 for non-CDN themes with no registration).
  *
  * WordPress usage (Option 3 - named sources for MULTIPLE files):
  * A. Manifest (recommended - update one JSON, every post follows):
@@ -54,6 +56,28 @@
  * });
  * </script>
  * Then in posts: <snippet-viewer source="java" snippet="java-class@WidgetService.java">
+ *
+ * Custom themes (named, CDN-independent):
+ * A custom Prism CSS theme can be registered under a short name. This registry
+ * is intentionally separate from the snippet `source` registry above — the
+ * theme stylesheet and the snippet JSON are two different concerns and don't
+ * have to (and often won't) live at the same host:
+ * <script>
+ * SnippetViewer.registerTheme('kondra-code', 'https://your-cdn.com/prism-kondra-code.css');
+ * </script>
+ * Then reference it globally:
+ * <script> SnippetViewer.setTheme('kondra-code'); </script>
+ * ...or per-instance, which overrides the global/meta-tag theme just for that viewer:
+ * <snippet-viewer snippet="my-code@example.ts" theme="kondra-code"></snippet-viewer>
+ * <snippet-viewer snippet="other-code@other.ts" theme="okaidia"></snippet-viewer>
+ *
+ * A fully custom stylesheet URL can also be set directly (bypasses the named
+ * registry entirely, and takes priority over `theme`/`theme-name`):
+ * <script>
+ * SnippetViewer.setThemeUrl('https://your-cdn.com/prism-custom.css');
+ * </script>
+ * <meta name="snippet-theme-url" content="https://your-cdn.com/prism-custom.css">
+ * <snippet-viewer snippet="my-code@example.ts" theme-url="https://your-cdn.com/prism-other.css"></snippet-viewer>
  *
  * Then in any post/page, just use:
  * <snippet-viewer snippet="my-code@example.ts"></snippet-viewer>
@@ -75,20 +99,11 @@
   const config = {
     snippetHost: null,
     theme: null,
+    themeUrl: null,
   };
 
   // Default theme if none configured
   const DEFAULT_THEME = "tomorrow";
-
-  // List of standard themes supported globally by the Prism CDN core
-  const STANDARD_CDN_THEMES = [
-    "tomorrow",
-    "okaidia",
-    "twilight",
-    "coy",
-    "solarizedlight",
-    "dark",
-  ];
 
   /**
    * Set global snippet host for all viewers.
@@ -111,13 +126,14 @@
 
   /**
    * Set global Prism.js theme for syntax highlighting.
-   * Must be called BEFORE any snippet-viewer elements are rendered.
+   * This is the DEFAULT/fallback theme; an individual <snippet-viewer theme="...">
+   * attribute takes priority over this.
    */
   function setTheme(theme) {
     config.theme = theme;
   }
 
-  function getTheme() {
+  function getGlobalTheme() {
     // Check for meta tag if no theme configured
     if (!config.theme) {
       const meta = document.querySelector('meta[name="snippet-theme"]');
@@ -126,6 +142,71 @@
       }
     }
     return config.theme || DEFAULT_THEME;
+  }
+
+  /**
+   * Set a global custom Prism CSS stylesheet URL for all viewers.
+   * When set, this fully replaces the built-in CDN theme (setTheme/theme
+   * attribute and the named-theme registry are ignored). Use this to match a
+   * custom brand look.
+   *
+   * Individual elements can still override with: <snippet-viewer theme-url="...">
+   */
+  function setThemeUrl(url) {
+    config.themeUrl = url;
+  }
+
+  function getGlobalThemeUrl() {
+    if (!config.themeUrl) {
+      const meta = document.querySelector('meta[name="snippet-theme-url"]');
+      if (meta) {
+        config.themeUrl = meta.getAttribute("content");
+      }
+    }
+    return config.themeUrl || null;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Named custom themes
+  //
+  // Deliberately its own registry, independent of the snippet `sources` registry
+  // below — a theme stylesheet and a snippets.json file are different concerns
+  // and there's no reason a multi-source page should have to duplicate its
+  // theme URL under every source's host.
+  // ---------------------------------------------------------------------------
+  const customThemes = new Map(); // name -> css URL
+  const allInstances = new Set();
+
+  /**
+   * Register a custom theme under a short name, so it can be referenced with
+   * just `theme="name"` (or SnippetViewer.setTheme('name')) instead of a full
+   * theme-url.
+   *
+   * Usage:
+   *   SnippetViewer.registerTheme('kondra-code', 'https://your-cdn.com/prism-kondra-code.css');
+   *   ...
+   *   <snippet-viewer theme="kondra-code" ...></snippet-viewer>
+   */
+  function registerTheme(name, url) {
+    customThemes.set(name, url);
+
+    // Retroactively fix any viewers that already rendered with this theme
+    // name before it was registered (e.g. registerTheme() called after the
+    // <snippet-viewer> elements were parsed/upgraded).
+    allInstances.forEach((instance) => {
+      if (instance.isConnected && instance.theme === name) {
+        instance.render();
+        if (instance._currentCode) {
+          instance.renderCode(instance._currentCode);
+        } else {
+          instance.loadSnippet();
+        }
+      }
+    });
+  }
+
+  function resolveThemeUrl(themeName) {
+    return customThemes.get(themeName) || null;
   }
 
   // ---------------------------------------------------------------------------
@@ -334,7 +415,7 @@
 
   class SnippetViewer extends HTMLElement {
     static get observedAttributes() {
-      return ["snippet", "snippet-host", "source"];
+      return ["snippet", "snippet-host", "source", "theme", "theme-url"];
     }
 
     constructor() {
@@ -342,6 +423,7 @@
       this.attachShadow({ mode: "open" });
       this._rendered = false;
       this._currentCode = "";
+      allInstances.add(this);
     }
 
     connectedCallback() {
@@ -350,9 +432,24 @@
       this.loadSnippet();
     }
 
-    attributeChangedCallback(_name, oldValue, newValue) {
+    disconnectedCallback() {
+      allInstances.delete(this);
+    }
+
+    attributeChangedCallback(name, oldValue, newValue) {
       // Only react to changes after initial render
-      if (this._rendered && oldValue !== newValue) {
+      if (!this._rendered || oldValue === newValue) return;
+
+      if (name === "theme" || name === "theme-url") {
+        // Theme changes only need a re-render of the shadow DOM (new Prism
+        // CSS link), not a re-fetch of the snippet data.
+        this.render();
+        if (this._currentCode) {
+          this.renderCode(this._currentCode);
+        } else {
+          this.loadSnippet();
+        }
+      } else {
         this.loadSnippet();
       }
     }
@@ -367,6 +464,18 @@
 
     get source() {
       return this.getAttribute("source") || "";
+    }
+
+    // Per-instance theme attribute wins; falls back to the global/meta-tag theme.
+    get theme() {
+      return this.getAttribute("theme") || getGlobalTheme();
+    }
+
+    // Optional: a fully custom Prism CSS stylesheet URL. When set, this
+    // replaces the built-in/named theme entirely (the `theme` attribute is
+    // ignored). Use this to match a custom brand look.
+    get themeUrl() {
+      return this.getAttribute("theme-url") || getGlobalThemeUrl();
     }
 
     async loadSnippet() {
@@ -433,16 +542,16 @@
     }
 
     render() {
-      const theme = getTheme();
-      const host = this.snippetHost.replace(/\/$/, "");
+      const theme = this.theme;
 
-      // ROBUST DYNAMIC THEME ENGINE:
-      // Instantly checks if the set theme is a native cloud-hosted Prism CDN theme.
-      // If it isn't listed (e.g. "kondra-code", "my-dark-theme", etc.), the framework
-      // automatically switches to local lookup conventions relative to your host URL.
-      const themeUrl = STANDARD_CDN_THEMES.includes(theme)
-        ? `${PRISM_CDN}/themes/prism-${theme}.min.css`
-        : `${host}/theme/prism-${theme}.css`;
+      // Theme resolution is intentionally independent of snippetHost/source:
+      // an explicit theme-url wins, then a name registered via registerTheme(),
+      // then a plain fallback to the standard Prism CDN theme path.
+      const explicitUrl = this.themeUrl;
+      const registeredUrl = !explicitUrl ? resolveThemeUrl(theme) : null;
+      const resolvedUrl = explicitUrl || registeredUrl;
+      const themeUrl =
+        resolvedUrl || `${PRISM_CDN}/themes/prism-${theme}.min.css`;
 
       this.shadowRoot.innerHTML = `
         <link rel="stylesheet" href="${themeUrl}">
@@ -751,6 +860,8 @@
   global.SnippetViewer = SnippetViewer;
   global.SnippetViewer.setDefaultHost = setDefaultHost;
   global.SnippetViewer.setTheme = setTheme;
+  global.SnippetViewer.setThemeUrl = setThemeUrl;
+  global.SnippetViewer.registerTheme = registerTheme;
   global.SnippetViewer.setSource = setSource;
   global.SnippetViewer.setSources = setSources;
   global.SnippetProvider = SnippetProvider;
