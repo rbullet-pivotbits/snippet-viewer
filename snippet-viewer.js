@@ -105,16 +105,20 @@
   }
 
   /**
-   * Set global Prism.js theme for syntax highlighting.
-   * Must be called BEFORE any snippet-viewer elements are rendered.
+   * Set the global Prism.js theme for syntax highlighting. The value is either a
+   * built-in Prism theme name (resolved against the CDN) or a full stylesheet
+   * URL for a custom theme. Mirrors setDefaultHost: set it once in your header,
+   * or via <meta name="snippet-theme">. An individual <snippet-viewer theme="...">
+   * attribute overrides it.
    *
    * Usage:
-   *   SnippetViewer.setTheme('okaidia');
+   *   SnippetViewer.setTheme('okaidia');                          // built-in name
+   *   SnippetViewer.setTheme('https://cdn.example.com/my.css');   // custom URL
    *
    * Or via meta tag (parsed automatically):
    *   <meta name="snippet-theme" content="okaidia">
    *
-   * Available themes: 'tomorrow', 'okaidia', 'twilight', 'coy', 'solarizedlight', 'dark'
+   * Built-in names: 'tomorrow', 'okaidia', 'twilight', 'coy', 'solarizedlight', 'dark'
    */
   function setTheme(theme) {
     config.theme = theme;
@@ -187,7 +191,9 @@
           if (!sources.has(name)) sources.set(name, url);
         });
       } catch (err) {
-        console.error(`snippet-viewer: failed to load sources manifest: ${err.message}`);
+        console.error(
+          `snippet-viewer: failed to load sources manifest: ${err.message}`,
+        );
       }
     })();
     return sourcesManifestPromise;
@@ -335,7 +341,7 @@
 
   class SnippetViewer extends HTMLElement {
     static get observedAttributes() {
-      return ["snippet", "snippet-host", "source"];
+      return ["snippet", "snippet-host", "source", "theme"];
     }
 
     constructor() {
@@ -351,9 +357,20 @@
       this.loadSnippet();
     }
 
-    attributeChangedCallback(_name, oldValue, newValue) {
+    attributeChangedCallback(name, oldValue, newValue) {
       // Only react to changes after initial render
-      if (this._rendered && oldValue !== newValue) {
+      if (!this._rendered || oldValue === newValue) return;
+
+      if (name === "theme") {
+        // A theme change only swaps the stylesheet link — re-render the shadow
+        // DOM and re-highlight the current code, no re-fetch needed.
+        this.render();
+        if (this._currentCode) {
+          this.renderCode(this._currentCode);
+        } else {
+          this.loadSnippet();
+        }
+      } else {
         this.loadSnippet();
       }
     }
@@ -368,6 +385,11 @@
 
     get source() {
       return this.getAttribute("source") || "";
+    }
+
+    // Per-element theme wins; falls back to the global/meta-tag theme.
+    get theme() {
+      return this.getAttribute("theme") || getTheme();
     }
 
     async loadSnippet() {
@@ -412,7 +434,7 @@
     async copyToClipboard() {
       try {
         await navigator.clipboard.writeText(this._currentCode);
-        
+
         // Show feedback
         if (this._els?.copyButton) {
           const button = this._els.copyButton;
@@ -423,7 +445,7 @@
             </svg>
           `;
           button.classList.add("copied");
-          
+
           setTimeout(() => {
             button.innerHTML = originalText;
             button.classList.remove("copied");
@@ -435,9 +457,18 @@
     }
 
     render() {
-      const theme = getTheme();
+      const theme = this.theme;
+
+      // A theme value is either a bare Prism theme name (resolved against the
+      // CDN) or a full/root-relative stylesheet URL for a custom theme. One
+      // field, like snippet-host — no separate registry or theme-url attribute.
+      const themeUrl =
+        /^(https?:)?\/\//.test(theme) || theme.startsWith("/")
+          ? theme
+          : `${PRISM_CDN}/themes/prism-${theme}.min.css`;
+
       this.shadowRoot.innerHTML = `
-        <link rel="stylesheet" href="${PRISM_CDN}/themes/prism-${theme}.min.css">
+        <link rel="stylesheet" href="${themeUrl}">
         <link rel="stylesheet" href="${PRISM_CDN}/plugins/line-numbers/prism-line-numbers.min.css">
         <style>
           :host {
@@ -545,7 +576,9 @@
       };
 
       // Add click handler to copy button
-      this._els.copyButton?.addEventListener("click", () => this.copyToClipboard());
+      this._els.copyButton?.addEventListener("click", () =>
+        this.copyToClipboard(),
+      );
     }
 
     async renderCode(code) {
@@ -567,7 +600,7 @@
       codeElement.textContent = code;
       pre.className = `line-numbers language-${language}`;
       codeElement.className = `language-${language}`;
-      
+
       // Show copy button
       if (copyButton) {
         copyButton.style.display = "flex";
@@ -594,7 +627,7 @@
       codeElement.textContent = message;
       codeElement.className = "";
       pre.className = "error";
-      
+
       // Hide copy button on error
       if (copyButton) {
         copyButton.style.display = "none";
@@ -606,12 +639,12 @@
       const { filename, code: codeElement, pre, copyButton } = this._els;
 
       filename.textContent = "Loading...";
-      
+
       // Update code element without destroying the structure
       codeElement.textContent = "Loading snippet...";
       codeElement.className = "";
       pre.className = "loading";
-      
+
       // Hide copy button while loading
       if (copyButton) {
         copyButton.style.display = "none";
@@ -668,7 +701,10 @@
     }
 
     attributeChangedCallback(name, oldValue, newValue) {
-      if (oldValue !== newValue && (name === "snippet-host" || name === "source")) {
+      if (
+        oldValue !== newValue &&
+        (name === "snippet-host" || name === "source")
+      ) {
         this.prefetch();
       }
     }
@@ -709,7 +745,7 @@
         new CustomEvent("snippets-loaded", {
           bubbles: false,
           detail: { snippets: this._snippets, error: this._error },
-        })
+        }),
       );
 
       // Push this provider's source/host down to child viewers that don't carry
@@ -717,7 +753,10 @@
       // alone, so a single viewer can opt into a different source mid-subtree.
       const viewers = this.querySelectorAll("snippet-viewer");
       viewers.forEach((viewer) => {
-        if (viewer.hasAttribute("source") || viewer.hasAttribute("snippet-host")) {
+        if (
+          viewer.hasAttribute("source") ||
+          viewer.hasAttribute("snippet-host")
+        ) {
           return;
         }
         if (this.source) {
